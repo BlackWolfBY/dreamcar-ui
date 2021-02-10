@@ -18,5 +18,11 @@ export default {
       icon: 'mdi-access-point',
       order: 300,
     },
+    {
+      title: 'test',
+      path: '/test',
+      icon: 'mdi-anchor',
+      order: 300,
+    },
   ],
 }

@@ -29,7 +29,7 @@
       <v-toolbar-title v-text="title" />
       <v-spacer />
 
-      <v-btn icon @click.stop="setLocale(ru)">
+      <v-btn icon @click="switchLocalePath('ru')">
         <v-icon>mdi-translate</v-icon>
       </v-btn>
     </v-app-bar>
@@ -61,18 +61,6 @@ export default {
       drawer: false,
       fixed: false,
       menuItems: appConfig.menu.sort(comparator),
-      items: [
-        {
-          icon: 'mdi-apps',
-          title: 'Welcome',
-          to: '/',
-        },
-        {
-          icon: 'mdi-chart-bubble',
-          title: 'Inspire',
-          to: '/inspire',
-        },
-      ],
       miniVariant: false,
       title: ctx.$t('projectName'),
     }

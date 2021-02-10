@@ -39,7 +39,9 @@ export default {
   ],
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
-  axios: {},
+  axios: {
+    baseUrl: process.env.BASE_URL,
+  },
 
   // I18n module configuration: https://i18n.nuxtjs.org/options-reference/
   i18n: {

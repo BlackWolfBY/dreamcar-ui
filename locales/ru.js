@@ -4,5 +4,6 @@ export default {
     welcome: 'Добро пожаловть',
     offers: 'Предложения',
     requests: 'Запросы',
+    test: 'Тест',
   },
 }

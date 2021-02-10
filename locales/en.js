@@ -4,5 +4,6 @@ export default {
     welcome: 'Welcome',
     offers: 'Offers',
     requests: 'Requests',
+    test: 'Test',
   },
 }

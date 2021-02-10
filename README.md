@@ -1,5 +1,10 @@
 # dreamcar-ui
 
+
+## users example start guide
+In the root create .env file with property BASE_URL=https://jsonplaceholder.typicode.com
+
+
 ## Build Setup
 
 ```bash
@@ -18,3 +23,6 @@ $ npm run generate
 ```
 
 For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
+
+
+
