@@ -46,22 +46,44 @@
                       v-model="editedItem.requestId"
                       label="Request ID"
                       :readonly="disabled"
+                      @blur="$v.editedItem.requestId.$touch()"
                     ></v-text-field>
+                    <div v-if="!$v.editedItem.requestId.required" class="error">
+                      Field is required
+                    </div>
                   </v-col>
                   <v-col cols="12" sm="6" md="4">
                     <v-text-field
                       v-model="editedItem.price"
                       type="number"
+                      min="0"
                       label="Price"
                       :readonly="disabled"
+                      @blur="$v.editedItem.price.$touch()"
                     ></v-text-field>
+                    <div v-if="!$v.editedItem.price.error" class="error">
+                      <template v-if="!$v.editedItem.price.required">
+                        Field is required
+                      </template>
+                      <template v-if="!$v.editedItem.price.numeric">
+                        Only numbers can be entered
+                      </template>
+                    </div>
                   </v-col>
                   <v-col cols="12" sm="6" md="4">
                     <v-text-field
                       v-model="editedItem.description"
                       label="Description"
                       :readonly="disabled"
+                      @blur="$v.editedItem.description.$touch()"
                     ></v-text-field>
+                    <div
+                      v-if="!$v.editedItem.description.maxLength"
+                      class="error"
+                    >
+                      Max number of characters is
+                      {{ $v.editedItem.description.$params.maxLength.max }}
+                    </div>
                   </v-col>
                   <v-col cols="12" sm="6" md="4">
                     <v-text-field
@@ -101,8 +123,10 @@
               <v-btn color="blue darken-1" text @click="close"> Cancel </v-btn>
               <v-btn
                 v-show="displaySave"
+                type="submit"
                 color="blue darken-1"
                 text
+                :disabled="$v.$invalid"
                 @click="save"
               >
                 Save
@@ -165,7 +189,11 @@
 
 <script>
 import { mapActions } from 'vuex'
+import { required, numeric, maxLength } from 'vuelidate/lib/validators'
+import { validationMixin } from 'vuelidate'
+
 export default {
+  mixins: [validationMixin],
   data: () => ({
     dialog: false,
     dialogDelete: false,
@@ -196,7 +224,7 @@ export default {
       id: '',
       status: '',
       requestId: '',
-      price: 0,
+      price: '',
       description: '',
       createdAt: '',
       createdBy: '',
@@ -207,7 +235,7 @@ export default {
       id: '',
       status: '',
       requestId: '',
-      price: 0,
+      price: '',
       description: '',
       createdAt: '',
       createdBy: '',
@@ -215,6 +243,21 @@ export default {
       updatedBy: '',
     },
   }),
+
+  validations: {
+    editedItem: {
+      price: {
+        required,
+        numeric,
+      },
+      requestId: {
+        required,
+      },
+      description: {
+        maxLength: maxLength(200),
+      },
+    },
+  },
 
   computed: {
     formTitle() {
@@ -334,3 +377,11 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.error {
+  font-size: 8pt;
+  color: red;
+  background: transparent !important;
+}
+</style>
