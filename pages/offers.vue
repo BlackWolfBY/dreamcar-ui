@@ -2,15 +2,15 @@
   <v-data-table
     :headers="headers"
     :items="offers"
-    sort-by="id"
-    class="elevation-1"
     :loading="loading"
     loading-text="Loading... Please wait"
+    sort-by="id"
+    class="elevation-1"
     @click:row="itemClick"
   >
     <template #top>
       <v-toolbar flat>
-        <v-toolbar-title>Offers</v-toolbar-title>
+        <v-toolbar-title>Offers </v-toolbar-title>
         <v-divider class="mx-4" inset vertical></v-divider>
         <v-spacer></v-spacer>
         <v-dialog v-model="dialog" max-width="1000px">
@@ -23,7 +23,6 @@
             <v-card-title>
               <span class="headline">{{ formTitle }}</span>
             </v-card-title>
-
             <v-card-text>
               <v-container>
                 <v-row>
@@ -48,7 +47,10 @@
                       :readonly="disabled"
                       @blur="$v.editedItem.requestId.$touch()"
                     ></v-text-field>
-                    <div v-if="!$v.editedItem.requestId.required" class="error">
+                    <div
+                      v-if="!$v.editedItem.requestId.required"
+                      class="errorUI"
+                    >
                       Field is required
                     </div>
                   </v-col>
@@ -61,7 +63,7 @@
                       :readonly="disabled"
                       @blur="$v.editedItem.price.$touch()"
                     ></v-text-field>
-                    <div v-if="!$v.editedItem.price.error" class="error">
+                    <div v-if="!$v.editedItem.price.error" class="errorUI">
                       <template v-if="!$v.editedItem.price.required">
                         Field is required
                       </template>
@@ -79,7 +81,7 @@
                     ></v-text-field>
                     <div
                       v-if="!$v.editedItem.description.maxLength"
-                      class="error"
+                      class="errorUI"
                     >
                       Max number of characters is
                       {{ $v.editedItem.description.$params.maxLength.max }}
@@ -167,6 +169,18 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+
+        <v-dialog :value="error" max-width="500px">
+          <v-alert
+            type="error"
+            style="margin-bottom: 0px"
+            class="text-center"
+            elevation="8"
+            prominent
+          >
+            Server error: {{ error }}
+          </v-alert>
+        </v-dialog>
       </v-toolbar>
     </template>
     <template #[`item.createdAt`]="{ item }">
@@ -188,7 +202,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapActions, mapState } from 'vuex'
 import { required, numeric, maxLength } from 'vuelidate/lib/validators'
 import { validationMixin } from 'vuelidate'
 
@@ -198,7 +212,6 @@ export default {
     dialog: false,
     dialogDelete: false,
     offerClosed: false,
-    loading: true,
     disabled: false,
     closedTitle: '',
     display: false,
@@ -264,9 +277,11 @@ export default {
       if (this.display === true) return 'Display Offer'
       else return this.editedIndex === -1 ? 'New Offer' : 'Edit Offer'
     },
-    offers() {
-      return this.$store.state.offers.offers
-    },
+    ...mapState({
+      offers: (state) => state.offers.items,
+      error: (state) => state.offers.error,
+      loading: (state) => state.offers.loading,
+    }),
   },
 
   watch: {
@@ -282,10 +297,7 @@ export default {
   },
 
   mounted() {
-    this.loading = true
-    this.getOffers().then(() => {
-      this.loading = false
-    })
+    this.getOffers()
   },
 
   methods: {
@@ -296,7 +308,7 @@ export default {
       updateOffer: 'offers/updateOffer',
     }),
     initialize() {
-      this.offers = this.$store.state.offers.offers
+      this.getOffers()
     },
     itemClick(item) {
       this.editedIndex = this.offers.indexOf(item)
@@ -379,7 +391,7 @@ export default {
 </script>
 
 <style scoped>
-.error {
+.errorUI {
   font-size: 8pt;
   color: red;
   background: transparent !important;

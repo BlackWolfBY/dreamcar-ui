@@ -1,26 +1,36 @@
 import axios from 'axios'
 
 export const state = () => ({
-  offers: [],
-  error: null,
+  items: [],
+  error: '',
+  loading: true,
 })
 
 export const actions = {
   getOffers({ commit }) {
-    this.loading = true
-    axios.get('http://localhost:8080/offers/').then((response) => {
-      commit('setOffers', response.data)
-    })
+    axios
+      .get('http://localhost:8080/offers/')
+      .then((response) => {
+        commit('setOffers', response.data)
+      })
+      .catch((e) => commit('setError', e.response.data.message))
+      .finally(() => commit('loading'))
   },
   deleteOffer({ commit }, id) {
-    axios.delete('http://localhost:8080/offers/' + id).then((response) => {
-      commit('patchOffer', response.data)
-    })
+    axios
+      .delete('http://localhost:8080/offers/' + id)
+      .then((response) => {
+        commit('patchOffer', response.data)
+      })
+      .catch((e) => commit('setError', e.response.data.message))
   },
   createOffer({ commit }, offer) {
-    axios.post('http://localhost:8080/offers/', offer).then((response) => {
-      commit('newOffer', response.data)
-    })
+    axios
+      .post('http://localhost:8080/offers/', offer)
+      .then((response) => {
+        commit('newOffer', response.data)
+      })
+      .catch((e) => commit('setError', e.response.data.message))
   },
   updateOffer({ commit }, offer) {
     axios
@@ -28,21 +38,28 @@ export const actions = {
       .then((response) => {
         commit('patchOffer', response.data)
       })
+      .catch((e) => commit('setError', e.response.data.message))
+  },
+  clearError({ commit }) {
+    commit('clearErr')
   },
 }
 
 export const mutations = {
   setOffers(state, payload) {
-    state.offers = payload
+    state.items = payload
   },
   newOffer(state, payload) {
-    state.offers.push(payload)
+    state.items.push(payload)
   },
   patchOffer(state, payload) {
-    state.offers = state.offers.filter((offer) => offer.id !== payload.id)
-    state.offers.push(payload)
+    state.items = state.items.filter((offer) => offer.id !== payload.id)
+    state.items.push(payload)
   },
-  setError(state, error) {
-    state.error = error
+  setError(state, payload) {
+    state.error = payload
+  },
+  loading(state) {
+    state.loading = false
   },
 }
