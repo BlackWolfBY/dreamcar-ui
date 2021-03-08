@@ -1,5 +1,7 @@
 import axios from 'axios'
 
+const offersUrl = 'https://dreamcar-api.herokuapp.com/offers/'
+
 export const state = () => ({
   items: [],
   error: '',
@@ -9,7 +11,7 @@ export const state = () => ({
 export const actions = {
   getOffers({ commit }) {
     axios
-      .get('http://localhost:8080/offers/')
+      .get(`${offersUrl}`)
       .then((response) => {
         commit('setOffers', response.data)
       })
@@ -18,7 +20,7 @@ export const actions = {
   },
   deleteOffer({ commit }, id) {
     axios
-      .delete('http://localhost:8080/offers/' + id)
+      .delete(`${offersUrl}` + id)
       .then((response) => {
         commit('patchOffer', response.data)
       })
@@ -26,22 +28,20 @@ export const actions = {
   },
   createOffer({ commit }, offer) {
     axios
-      .post('http://localhost:8080/offers/', offer)
+      .post(`${offersUrl}`, offer)
       .then((response) => {
         commit('newOffer', response.data)
       })
       .catch((e) => commit('setError', e.response.data.message))
   },
   updateOffer({ commit }, offer) {
+    if (offer.status === 'Открыто') offer.status = 'OPEN'
     axios
-      .patch('http://localhost:8080/offers/' + offer.id, offer)
+      .patch(`${offersUrl}` + offer.id, offer)
       .then((response) => {
         commit('patchOffer', response.data)
       })
       .catch((e) => commit('setError', e.response.data.message))
-  },
-  clearError({ commit }) {
-    commit('clearErr')
   },
 }
 
