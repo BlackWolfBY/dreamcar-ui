@@ -4,7 +4,8 @@
     :items="offers"
     :loading="loading"
     :loading-text="messages.loading"
-    sort-by="id"
+    :sort-by.sync="columnName"
+    :sort-desc.sync="isDescending"
     class="elevation-1"
     :footer-props="{
       itemsPerPageAllText: dialogLabels.itemsAllText,
@@ -27,6 +28,18 @@
             <v-card-title>
               <span class="headline">{{ formTitle }}</span>
             </v-card-title>
+            <v-card-subtitle v-if="error">
+              <v-alert class="ma-4" type="error">
+                <v-row align="center">
+                  <v-col class="grow">
+                    {{ messages.serverError + error }}
+                  </v-col>
+                  <v-col class="shrink">
+                    <v-btn @click="clearError"> Close </v-btn>
+                  </v-col>
+                </v-row>
+              </v-alert>
+            </v-card-subtitle>
             <v-card-text>
               <v-container>
                 <v-row>
@@ -150,6 +163,20 @@
             <v-card-title class="headline, justify-center">{{
               messages.sureToClose
             }}</v-card-title>
+            <v-card-subtitle v-if="error">
+              <v-alert class="ma-4" type="error">
+                <v-row align="center">
+                  <v-col class="grow">
+                    {{ messages.serverError + error }}
+                  </v-col>
+                  <v-col class="shrink">
+                    <v-btn @click="clearError">
+                      {{ dialogLabels.close }}
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </v-alert>
+            </v-card-subtitle>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn color="blue darken-1" text @click="closeDelete">{{
@@ -162,7 +189,6 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
-
         <v-dialog v-model="offerClosed" max-width="600px">
           <v-card>
             <v-card-title class="headline, justify-center">
@@ -176,18 +202,6 @@
               <v-spacer></v-spacer>
             </v-card-actions>
           </v-card>
-        </v-dialog>
-
-        <v-dialog :value="error" max-width="500px">
-          <v-alert
-            type="error"
-            style="margin-bottom: 0px"
-            class="text-center"
-            elevation="8"
-            prominent
-          >
-            {{ messages.serverError + error }}
-          </v-alert>
         </v-dialog>
       </v-toolbar>
     </template>
@@ -207,7 +221,19 @@
       <v-icon small @click.stop="deleteItem(item)"> mdi-delete </v-icon>
     </template>
     <template #no-data>
-      <v-btn color="primary" @click="initialize"> Reset </v-btn>
+      <v-alert v-if="error" class="ma-4" type="error">
+        <v-row align="center">
+          <v-col class="grow">
+            {{ messages.serverError + error }}
+          </v-col>
+          <v-col class="shrink">
+            <v-btn @click="clearError"> {{ dialogLabels.close }} </v-btn>
+          </v-col>
+        </v-row>
+      </v-alert>
+      <v-btn color="primary" class="ma-4" @click="initialize">
+        {{ dialogLabels.reset }}
+      </v-btn>
     </template>
   </v-data-table>
 </template>
@@ -228,6 +254,8 @@ export default {
     display: false,
     displaySave: true,
     editedIndex: -1,
+    columnName: 'updatedAt',
+    isDescending: true,
     editedItem: {
       id: '',
       status: '',
@@ -313,6 +341,8 @@ export default {
         cancel: this.$t('common.buttons.cancel'),
         save: this.$t('common.buttons.save'),
         yes: this.$t('common.buttons.yes'),
+        close: this.$t('common.buttons.close'),
+        reset: this.$t('common.buttons.reset'),
       }
     },
     messages() {
@@ -325,17 +355,6 @@ export default {
         maxNumber: this.$t('common.messages.maxNumber'),
         loading: this.$t('common.messages.loading'),
         serverError: this.$t('common.messages.serverError'),
-      }
-    },
-    offerStatus() {
-      return (status) => {
-        if (status === 'OPEN') return this.$t('common.fieldLabels.openStatus')
-        if (status === 'CLOSE') return this.$t('common.fieldLabels.closeStatus')
-      }
-    },
-    dateTransformer() {
-      return (date) => {
-        return new Date(date).toLocaleString()
       }
     },
     formTitle() {
@@ -364,8 +383,10 @@ export default {
     },
   },
 
-  mounted() {
-    this.getOffers()
+  async mounted() {
+    await this.getOffers().catch((err) => {
+      this.setGlobalError(err)
+    })
   },
 
   methods: {
@@ -374,9 +395,22 @@ export default {
       deleteOffer: 'offers/deleteOffer',
       createOffer: 'offers/createOffer',
       updateOffer: 'offers/updateOffer',
+      clearError: 'offers/clearErrorMessage',
+      setError: 'offers/getError',
+      setGlobalError: 'offers/getGlobalError',
     }),
-    initialize() {
-      this.getOffers()
+    dateTransformer(date) {
+      return new Date(date).toLocaleString()
+    },
+    offerStatus(status) {
+      if (status === 'OPEN') return this.$t('common.fieldLabels.openStatus')
+      if (status === 'CLOSE') return this.$t('common.fieldLabels.closeStatus')
+    },
+    async initialize() {
+      this.clearError()
+      await this.getOffers().catch((err) => {
+        this.setGlobalError(err)
+      })
     },
     itemClick(item) {
       this.editedIndex = this.offers.indexOf(item)
@@ -420,11 +454,14 @@ export default {
       }
       this.dialogDelete = true
     },
-    deleteItemConfirm() {
-      this.deleteOffer(this.editedItem.id)
-      this.closeDelete()
+    async deleteItemConfirm() {
+      await this.deleteOffer(this.editedItem.id).catch((err) => {
+        this.setError(err)
+      })
+      if (this.error === '') this.closeDelete()
     },
     close() {
+      this.clearError()
       this.dialog = false
       this.$nextTick(() => {
         this.editedItem = Object.assign({}, this.defaultItem)
@@ -435,6 +472,7 @@ export default {
       })
     },
     closeDelete() {
+      this.clearError()
       this.dialogDelete = false
       this.$nextTick(() => {
         this.editedItem = Object.assign({}, this.defaultItem)
@@ -448,13 +486,17 @@ export default {
         this.editedIndex = -1
       })
     },
-    save() {
+    async save() {
       if (this.editedIndex > -1) {
-        this.updateOffer(this.editedItem)
+        await this.updateOffer(this.editedItem).catch((err) => {
+          this.setError(err)
+        })
       } else {
-        this.createOffer(this.editedItem)
+        await this.createOffer(this.editedItem).catch((err) => {
+          this.setError(err)
+        })
       }
-      this.close()
+      if (this.error === '') this.close()
     },
   },
 }

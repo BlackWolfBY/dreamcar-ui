@@ -27,6 +27,8 @@ export default {
       cancel: 'Cancel',
       save: 'Save',
       yes: 'OK',
+      close: 'Close',
+      reset: 'Reset',
     },
     messages: {
       requiredField: 'Field is required',

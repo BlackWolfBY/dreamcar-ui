@@ -27,6 +27,8 @@ export default {
       cancel: 'Выход',
       save: 'Сохранить',
       yes: 'Да',
+      close: 'Закрыть',
+      reset: 'Обновить',
     },
     messages: {
       requiredField: 'Поле обязательно для заполнения',

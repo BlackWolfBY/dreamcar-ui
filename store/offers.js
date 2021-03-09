@@ -1,5 +1,3 @@
-import axios from 'axios'
-
 const offersUrl = 'https://dreamcar-api.herokuapp.com/offers/'
 
 export const state = () => ({
@@ -9,39 +7,34 @@ export const state = () => ({
 })
 
 export const actions = {
-  getOffers({ commit }) {
-    axios
-      .get(`${offersUrl}`)
-      .then((response) => {
-        commit('setOffers', response.data)
-      })
-      .catch((e) => commit('setError', e.response.data.message))
-      .finally(() => commit('loading'))
+  async getOffers({ commit }) {
+    commit('loadingStart')
+    const result = await this.$axios.$get(`${offersUrl}`)
+    commit('setOffers', result)
+    commit('loadingStop')
   },
-  deleteOffer({ commit }, id) {
-    axios
-      .delete(`${offersUrl}` + id)
-      .then((response) => {
-        commit('patchOffer', response.data)
-      })
-      .catch((e) => commit('setError', e.response.data.message))
+  async deleteOffer({ commit }, id) {
+    const result = await this.$axios.$delete(`${offersUrl}` + id)
+    commit('patchOffer', result)
   },
-  createOffer({ commit }, offer) {
-    axios
-      .post(`${offersUrl}`, offer)
-      .then((response) => {
-        commit('newOffer', response.data)
-      })
-      .catch((e) => commit('setError', e.response.data.message))
+  async createOffer({ commit }, offer) {
+    const result = await this.$axios.$post(`${offersUrl}`, offer)
+    commit('newOffer', result)
   },
-  updateOffer({ commit }, offer) {
+  async updateOffer({ commit }, offer) {
     if (offer.status === 'Открыто') offer.status = 'OPEN'
-    axios
-      .patch(`${offersUrl}` + offer.id, offer)
-      .then((response) => {
-        commit('patchOffer', response.data)
-      })
-      .catch((e) => commit('setError', e.response.data.message))
+    const result = await this.$axios.$patch(`${offersUrl}` + offer.id, offer)
+    commit('patchOffer', result)
+  },
+  clearErrorMessage({ commit }) {
+    commit('clearError')
+  },
+  getError({ commit }, error) {
+    commit('setError', error.response.data.message)
+  },
+  getGlobalError({ commit }, error) {
+    commit('loadingStop')
+    commit('setGlobalError', error)
   },
 }
 
@@ -59,7 +52,16 @@ export const mutations = {
   setError(state, payload) {
     state.error = payload
   },
-  loading(state) {
+  setGlobalError(state, payload) {
+    state.error = payload
+  },
+  loadingStop(state) {
     state.loading = false
+  },
+  loadingStart(state) {
+    state.loading = true
+  },
+  clearError(state) {
+    state.error = ''
   },
 }
